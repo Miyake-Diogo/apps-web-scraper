@@ -34,6 +34,10 @@ def main():
         st.header("This is your data explorer.")
         st.set_option('deprecation.showPyplotGlobalUse', False)
         
+        st.header('Alguns dos comentários:')
+        coments = app_reviews_df[['score', 'content']]
+        coments = coments.sample(20)
+        st.table(coments)
         st.header('Quantidade de Notas do APP')
         sentiment_chart = app_reviews_df.groupby(['score']).agg({'score': 'count'}).reset_index(drop=True)
         st.bar_chart(sentiment_chart)
