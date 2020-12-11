@@ -8,10 +8,12 @@ from wordcloud import WordCloud
 from nltk.metrics import ConfusionMatrix
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
+from sklearn.utils import resample
+from PIL import Image
 
 def main():
     st.title('XRate_App - Seu app de análise de sentimentos do Google Play e AppStore(future)')
-    page = st.sidebar.selectbox("Choose a page", ["Exploration", "Sentiment Test"])
+    page = st.sidebar.selectbox("Choose a page", ["Home", "Exploration", "Sentiment Analiser"])
     app_reviews_df = pd.read_csv("Data/xp_google_play_reviews.csv")
     app_reviews_df['at'] = pd.to_datetime(app_reviews_df['at'], errors='coerce')
     app_reviews_df['year_month'] = app_reviews_df['at'].dt.strftime('%Y-%m')
@@ -28,6 +30,37 @@ def main():
             return 'Undefined'
 
     app_reviews_df['sentiment'] = app_reviews_df.apply(gplay_sentiment, axis=1).reset_index(drop=True)
+    ## StopWords
+    stopwords_list = nltk.corpus.stopwords.words('portuguese')
+    ## Reduced DataFrame
+    df_reduzido = app_reviews_df[['content','sentiment']]
+
+    df_positive = df_reduzido[df_reduzido['sentiment']=='Positive']
+    df_negative = df_reduzido[df_reduzido['sentiment']=='Negative']
+    df_neutral = df_reduzido[df_reduzido['sentiment']=='Neutral']
+    maj_class1 = resample(df_positive, replace=True, n_samples=1736, random_state=123) 
+    maj_class2 = resample(df_negative, replace=True, n_samples=1736, random_state=123)
+
+    df_final=pd.concat([df_neutral,maj_class1,maj_class2])
+
+    ## Deletando o que não for necessário
+    del maj_class1, maj_class2, df_positive, df_neutral, df_negative
+
+    if page == "Home":
+
+        st.header("Bem vindo ao Xrate App!")
+        
+        image = Image.open('Data/XDATA.jpeg')
+        st.image(image, caption='XDATA - XP INC.', use_column_width=True)
+        
+        st.text("O Xrate App veio para melhorar suas decisões baseadas em reviews da AppStore e do GooglePlay.")
+        st.text("Existem três paginas até o Momento: Home, Exploration and Sentiment Analiser")
+
+        st.text("Home: Pagina Inicial")
+        st.text("Exploration: Pagina com pequenas informações sobre os dados capturados")
+        st.text("Sentiment Analiser: Pagina para testar o classificador de analise de sentimentos")
+
+        st.text("Fique a Vontade para dar seu FeedBack")
 
 
     if page == "Exploration":
@@ -47,15 +80,16 @@ def main():
         sentiment_table = app_reviews_df.groupby(['sentiment']).sentiment.count()
         st.table(sentiment_table)
         #st.bar_chart(sentiment_chart)
-        st.header('Quantidade de sentimentos positivos, negativos e neutros ao longo do tempo')
+        st.header('Quantidade de sentimentos longo do tempo')
         line_sentiment = app_reviews_df.groupby(['year_month']).agg({'sentiment': 'count'})#.reset_index(drop=True)
         st.line_chart(line_sentiment)
 
+
         ## Media de notas este mês
-        
         notas_media_agg = app_reviews_df.groupby(['year_month']).agg({'score': 'median'}).reset_index()
         #st.table(notas_media_agg)
         notas_media = notas_media_agg.loc[notas_media_agg['year_month'] == '2020-12']
+
         st.header('Media das notas este mês')
         st.dataframe(notas_media)
         ## Quantidade de notas 5
@@ -65,11 +99,7 @@ def main():
         plt.xticks(rotation='vertical')
         st.pyplot(fig)
 
-
-        ## StopWords
-        stopwords_list = nltk.corpus.stopwords.words('portuguese')
         ## WordCloud
-        df_reduzido = app_reviews_df[['content','sentiment']] 
         def get_word_clouds(df):
             words = []
             for i in df.content:
@@ -80,7 +110,7 @@ def main():
             return words        
 
         st.header('Nuvem de palavras mais utilizadas')
-        word_cloud = WordCloud(width=1000, height=800, margin=0).generate(get_word_clouds(df_reduzido))
+        word_cloud = WordCloud(width=1100, height=900, margin=0).generate(get_word_clouds(df_reduzido))
         plt.figure(figsize=(20,11))
         plt.imshow(word_cloud, interpolation='bilinear')
         plt.axis('off')
@@ -89,14 +119,10 @@ def main():
         st.pyplot()
 
     ##  Rodando a bodega toda 
-    elif page == "Sentiment Test":
-        ## StopWords
-        stopwords_list = nltk.corpus.stopwords.words('portuguese')
-        ## Reduced DataFrame
-        df_reduzido = app_reviews_df[['content','sentiment']]
+    elif page == "Sentiment Analiser":
 
         ## Spliting Data from Train and Test
-        treino, teste = train_test_split(df_reduzido, test_size=0.3)
+        treino, teste = train_test_split(df_final, test_size=0.3)
         def stemmer_aplied(text):
             stemmer = nltk.stem.SnowballStemmer("portuguese")
             phrases_without_stemmer = []
@@ -179,7 +205,15 @@ def main():
                 retorno_infos.append((phrase, classe, distribution.prob(classe)))
             df_final = pd.DataFrame(retorno_infos,columns=['frase','classe', 'probablidade da classe'])
             return df_final
-
+        st.header('Abaixo alguns exemplos de frases que podem ser utilizadas:')    
+        st.text('Exemplo de Frase Positiva: Simples , fácil e intuitivo	')
+        st.text('Exemplo de Frase Positiva: Gostei do App, pois ele facilita a vida!')
+        st.text('Exemplo de Frase Neutra: O aplicativo está abrindo sozinho, do nada! É só para mim que isso acontece?')
+        st.text('Exemplo de Frase Neutra: Bom o app Porém o atendimento pessoal ainda a margens para melhoras') 	
+        st.text('Exemplo de Frase Negativa: Não gostei,ruim, péssima experiência, toda hora pede o token que expira rapidamente, lixo de app.')
+        st.text('Exemplo de Frase Negativa: O app não carrega, já troquei de celular já modifiquei meu plano de internet más o app não carrega principalmente a aba bolsa. So carrega fora do horário de pregão quando não preciso mais, fora as atualizações que dizem que é para melhorar más só piora a compreensão, estou muito decepcionado. Se vcs se consideram a maior corretora de investimentos do país façam ao menos um app descente para seus usuários pois suas taxas são altíssimas e qualidade não corresponde.')
+        
+        st.header('Digite uma frase abaixo para testar o classificador')
         user_input = st.text_input("Insira uma frase de uma linha para testar o classificador: ")
         user_text = sentiment_tester(user_input)
         st.table(user_text)
