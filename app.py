@@ -3,6 +3,7 @@ import streamlit as st
 #from app_store_scraper import AppStore
 from google_play_scraper import Sort, reviews_all
 import nltk
+nltk.download('all')
 from nltk.tokenize import  word_tokenize
 from wordcloud import WordCloud
 from nltk.metrics import ConfusionMatrix
