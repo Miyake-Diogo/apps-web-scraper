@@ -1,23 +1,32 @@
 import pandas as pd
 import streamlit as st
-#from app_store_scraper import AppStore
+from app_store_scraper import AppStore
 from google_play_scraper import Sort, reviews_all
-import nltk
-nltk.download('all')
-from nltk.tokenize import  word_tokenize
 from wordcloud import WordCloud
-from nltk.metrics import ConfusionMatrix
-from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
-from sklearn.utils import resample
 from PIL import Image
 
 def main():
     st.set_page_config(page_title="XRate_App", page_icon=":rocket:", layout="wide", initial_sidebar_state="expanded")
 
-    st.title(':rocket: XRate_App - Seu app de análise de sentimentos do Google Play e AppStore(future) :rocket:')
-    page = st.sidebar.selectbox("Choose a page", ["Home", "Exploration", "Sentiment Analiser"])
-    app_reviews_df = pd.read_csv("Data/xp_google_play_reviews.csv")
+    st.title(':rocket: XRate_App - Seu app de análise de sentimentos do Google Play e AppStore :rocket:')
+    page = st.sidebar.selectbox("Choose a page", ["Home", "Exploration"])
+    
+    user_app_input = st.text_input("Digite o endereço do app a buscar os comentários (Gplay)", 'com.facebook.katana')
+
+    #app_to_Review = AppStore(country="br", app_name="xp-investimentos")
+    #review_appstore = app_to_Review.review()
+    #appstore_reviews_df = pd.DataFrame(review_appstore)
+
+    review_google_play = reviews_all(
+    user_app_input,
+    sleep_milliseconds=0, # defaults to 0
+    lang='pt_BR', # defaults to 'en'
+    country='br'#, # defaults to 'us'
+    #sort=Sort.NEWEST # defaults to Sort.MOST_RELEVANT
+    )
+    app_reviews_df = pd.DataFrame(review_google_play)
+    
     app_reviews_df['at'] = pd.to_datetime(app_reviews_df['at'], errors='coerce')
     app_reviews_df['year_month'] = app_reviews_df['at'].dt.strftime('%Y-%m')
     app_reviews_df['day'] = app_reviews_df['at'].dt.strftime('%d')
@@ -142,7 +151,7 @@ def main():
         plt.show()
         st.pyplot()
 
-        ## Tabelao 
+        ## Tabelão 
         st.header('Tabelão - Filtre conforme necessidade')
         cols = ["reviewId","content", "score", "thumbsUpCount", "reviewCreatedVersion", "at", "replyContent", "repliedAt"]
         num_rows = st.sidebar.slider('Selecione a quantidade de linhas para o Tabelão', min_value=1, max_value=50)
@@ -150,106 +159,6 @@ def main():
         tabelao_df = app_reviews_df[st_multiselect].head(num_rows)
         st.table(tabelao_df)
 
-
-    ##  Rodando a bodega toda 
-    elif page == "Sentiment Analiser":
-
-        ## Spliting Data from Train and Test
-        treino, teste = train_test_split(df_final, test_size=0.3)
-        def stemmer_aplied(text):
-            stemmer = nltk.stem.SnowballStemmer("portuguese")
-            phrases_without_stemmer = []
-            for (words, sentiment) in text:
-                with_stemmer = [str(stemmer.stem(p)) for p in words.lower().split() if p not in stopwords_list]
-                phrases_without_stemmer.append((with_stemmer, sentiment))
-            return phrases_without_stemmer
-
-        ## Steming de treino e teste
-        treino = [tuple(x) for x in treino.values]
-        frases_com_stem_treinamento = stemmer_aplied(treino)
-        teste = [tuple(x) for x in teste.values]
-        frases_com_stem_teste = stemmer_aplied(teste)
-
-        ## Busca Palavras
-
-        def search_words(phrases):
-            all_words = []
-            for (words, sentiment) in phrases:
-                all_words.extend(words)
-            return all_words
-
-        def frequency_search(words):
-            words = nltk.FreqDist(words)
-            return words
-
-
-        palavras_treinamento = search_words(frases_com_stem_treinamento)
-        palavras_teste = search_words(frases_com_stem_teste)
-
-        ## Frequencia das palavras 
-        frequencia_treinamento = frequency_search(palavras_treinamento)
-        frequencia_teste = frequency_search(palavras_teste)
-
-        ## Extrator de palavras
-        def search_unique_words(frequency):
-            freq = frequency.keys()
-            return freq
-
-        unique_words_train = search_unique_words(frequencia_treinamento)
-        unique_words_test = search_unique_words(frequencia_teste)
-
-        def words_extractor(document):
-            doc = set(document)
-            characteristics = {}
-            for words in unique_words_train:
-                characteristics['%s' % words] = (words in doc)
-            return characteristics
-
-        def words_extractor_test(document):
-            doc = set(document)
-            characteristics = {}
-            for words in unique_words_test:
-                characteristics['%s' % words] = (words in doc)
-            return characteristics
-
-        # Base completa
-        base_completa_treinamento = nltk.classify.apply_features(words_extractor, frases_com_stem_treinamento)
-        base_completa_teste = nltk.classify.apply_features(words_extractor_test, frases_com_stem_teste)
-
-        ## Classificando a Bodega
-        #classificador = nltk.NaiveBayesClassifier.train(base_completa_treinamento)
-        import pickle
-        f = open('Data/my_classifier.pickle', 'rb')
-        classificador = pickle.load(f)
-        f.close()
-
-        def sentiment_tester(phrase):
-            phrase
-            stemmer = nltk.stem.SnowballStemmer("portuguese")
-            test_stemming = []
-            retorno_infos = []
-            for (palavras_treinamento) in phrase.split():
-                with_stem = [p for p in palavras_treinamento.split()]
-                test_stemming.append(str(stemmer.stem(with_stem[0])))
-            new_job = words_extractor(test_stemming)
-            distribution = classificador.prob_classify(new_job)
-            
-            for classe in distribution.samples():
-                retorno_infos.append((phrase, classe, distribution.prob(classe)))
-            df_final = pd.DataFrame(retorno_infos,columns=['frase','classe', 'probablidade da classe'])
-            return df_final
-        st.header('Abaixo alguns exemplos de frases que podem ser utilizadas:')    
-        st.text('Exemplo de Frase Positiva: Simples , fácil e intuitivo	')
-        st.text('Exemplo de Frase Positiva: Gostei do App, pois ele facilita a vida!')
-        st.text('Exemplo de Frase Neutra: O aplicativo está abrindo sozinho, do nada! É só para mim que isso acontece?')
-        st.text('Exemplo de Frase Neutra: Bom o app Porém o atendimento pessoal ainda a margens para melhoras') 	
-        st.text('Exemplo de Frase Negativa: Não gostei,ruim, péssima experiência, toda hora pede o token que expira rapidamente, lixo de app.')
-        st.text('Exemplo de Frase Negativa: O app não carrega, já troquei de celular já modifiquei meu plano de internet más o app não carrega principalmente a aba bolsa. So carrega fora do horário de pregão quando não preciso mais, fora as atualizações que dizem que é para melhorar más só piora a compreensão, estou muito decepcionado. Se vcs se consideram a maior corretora de investimentos do país façam ao menos um app descente para seus usuários pois suas taxas são altíssimas e qualidade não corresponde.')
-        
-        st.header('Digite uma frase abaixo para testar o classificador')
-        user_input = st.text_input("Insira uma frase de uma linha para testar o classificador: ")
-        user_text = sentiment_tester(user_input)
-        st.table(user_text)
 
 if __name__ == "__main__":
     main()
