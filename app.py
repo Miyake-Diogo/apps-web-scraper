@@ -8,6 +8,7 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 from PIL import Image
 
+@st.cache
 def main():
     st.set_page_config(page_title="XRate_App", page_icon=":rocket:", layout="wide", initial_sidebar_state="expanded")
 
@@ -31,11 +32,14 @@ def main():
     #)
 
     #app_reviews_df = pd.DataFrame(review_google_play)
+    @st.cache
     app_reviews_df = pd.read_csv("Data/google_play_reviews.csv")
     app_reviews_df['at'] = pd.to_datetime(app_reviews_df['at'], errors='coerce')
     app_reviews_df['year_month'] = app_reviews_df['at'].dt.strftime('%Y-%m')
     app_reviews_df['day'] = app_reviews_df['at'].dt.strftime('%d')
 
+
+    @st.cache
     def gplay_sentiment(df):
         if df['score'] < 3:
             return 'Negative'
