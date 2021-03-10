@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 from PIL import Image
 
 def main():
-    st.set_page_config(page_title="XRate_App", page_icon=":rocket:", layout="wide", initial_sidebar_state="expanded")
+    st.set_page_config(page_title="Apps Web Scraper", page_icon=":rocket:", layout="wide", initial_sidebar_state="expanded")
 
-    st.title(':rocket: XRate_App - Seu app de exploração de comentários e feedbacks do Google Play e AppStore :rocket:')
+    st.title(':rocket: Apps Web Scraper - Seu app de exploração de comentários e feedbacks do Google Play e AppStore :rocket:')
     page = st.sidebar.selectbox("Choose a page", ["Home", "Exploration"])
     
     #user_app_input = st.text_input("Digite o endereço do app a buscar os comentários (Gplay)", 'com.facebook.katana')
