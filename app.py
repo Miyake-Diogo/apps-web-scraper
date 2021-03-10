@@ -50,18 +50,19 @@ def main():
     ## StopWords
     #stopwords_list = nltk.corpus.stopwords.words('portuguese')
     ## Reduced DataFrame
-    df_reduzido = app_reviews_df[['content','sentiment']]
+    
+    #df_reduzido = app_reviews_df[['content','sentiment']]
 
-    df_positive = df_reduzido[df_reduzido['sentiment']=='Positive']
-    df_negative = df_reduzido[df_reduzido['sentiment']=='Negative']
-    df_neutral = df_reduzido[df_reduzido['sentiment']=='Neutral']
-    maj_class1 = resample(df_positive, replace=True, n_samples=1736, random_state=123) 
-    maj_class2 = resample(df_negative, replace=True, n_samples=1736, random_state=123)
+    #df_positive = df_reduzido[df_reduzido['sentiment']=='Positive']
+    #df_negative = df_reduzido[df_reduzido['sentiment']=='Negative']
+    #df_neutral = df_reduzido[df_reduzido['sentiment']=='Neutral']
+    #maj_class1 = resample(df_positive, replace=True, n_samples=1736, random_state=123) 
+    #maj_class2 = resample(df_negative, replace=True, n_samples=1736, random_state=123)
 
-    df_final=pd.concat([df_neutral,maj_class1,maj_class2])
+    #df_final=pd.concat([df_neutral,maj_class1,maj_class2])
 
     ## Deletando o que não for necessário
-    del maj_class1, maj_class2, df_positive, df_neutral, df_negative
+    #del maj_class1, maj_class2, df_positive, df_neutral, df_negative
 
     if page == "Home":
 
