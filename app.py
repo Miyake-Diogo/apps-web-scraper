@@ -8,7 +8,6 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 from PIL import Image
 
-@st.cache
 def main():
     st.set_page_config(page_title="XRate_App", page_icon=":rocket:", layout="wide", initial_sidebar_state="expanded")
 
