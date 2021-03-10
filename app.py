@@ -1,4 +1,6 @@
 import pandas as pd
+#import nltk
+#nltk.download('all')
 import streamlit as st
 from app_store_scraper import AppStore
 from google_play_scraper import Sort, reviews_all
@@ -9,24 +11,27 @@ from PIL import Image
 def main():
     st.set_page_config(page_title="XRate_App", page_icon=":rocket:", layout="wide", initial_sidebar_state="expanded")
 
-    st.title(':rocket: XRate_App - Seu app de análise de sentimentos do Google Play e AppStore :rocket:')
+    st.title(':rocket: XRate_App - Seu app de exploração de comentários e feedbacks do Google Play e AppStore :rocket:')
     page = st.sidebar.selectbox("Choose a page", ["Home", "Exploration"])
     
-    user_app_input = st.text_input("Digite o endereço do app a buscar os comentários (Gplay)", 'com.facebook.katana')
+    #user_app_input = st.text_input("Digite o endereço do app a buscar os comentários (Gplay)", 'com.facebook.katana')
 
     #app_to_Review = AppStore(country="br", app_name="xp-investimentos")
     #review_appstore = app_to_Review.review()
     #appstore_reviews_df = pd.DataFrame(review_appstore)
-
-    review_google_play = reviews_all(
-    user_app_input,
-    sleep_milliseconds=0, # defaults to 0
-    lang='pt_BR', # defaults to 'en'
-    country='br'#, # defaults to 'us'
-    #sort=Sort.NEWEST # defaults to Sort.MOST_RELEVANT
-    )
-    app_reviews_df = pd.DataFrame(review_google_play)
     
+    ## Google Play App Store
+    #user_app_input = 'com.amazon.avod.thirdpartyclient' 
+    #review_google_play = reviews_all(
+    #user_app_input,
+    #sleep_milliseconds=0, # defaults to 0
+    #lang='pt_BR', # defaults to 'en'
+    #country='br'#, # defaults to 'us'
+    #sort=Sort.NEWEST # defaults to Sort.MOST_RELEVANT
+    #)
+
+    #app_reviews_df = pd.DataFrame(review_google_play)
+    app_reviews_df = pd.read_csv("Data/google_play_reviews.csv")
     app_reviews_df['at'] = pd.to_datetime(app_reviews_df['at'], errors='coerce')
     app_reviews_df['year_month'] = app_reviews_df['at'].dt.strftime('%Y-%m')
     app_reviews_df['day'] = app_reviews_df['at'].dt.strftime('%d')
@@ -36,14 +41,14 @@ def main():
             return 'Negative'
         elif df['score'] == 3:
             return 'Neutral'
-        elif df['score'] > 3:
+        elif df['score'] > 3: 
             return 'Positive'
         else:
             return 'Undefined'
 
     app_reviews_df['sentiment'] = app_reviews_df.apply(gplay_sentiment, axis=1).reset_index(drop=True)
     ## StopWords
-    stopwords_list = nltk.corpus.stopwords.words('portuguese')
+    #stopwords_list = nltk.corpus.stopwords.words('portuguese')
     ## Reduced DataFrame
     df_reduzido = app_reviews_df[['content','sentiment']]
 
@@ -62,15 +67,18 @@ def main():
 
         st.header("Bem vindo ao Xrate App!")
         
-        image = Image.open('Data/XDATA.jpeg')
-        st.image(image, caption='XDATA - XP INC.', use_column_width=True)
+        #image = Image.open('Data/XDATA.jpeg')
+        #st.image(image, caption='XDATA - XP INC.', use_column_width=True)
 
         st.text("O Xrate App veio para melhorar suas decisões baseadas em reviews da AppStore e do GooglePlay.")
-        st.text("Existem três paginas até o Momento: Home, Exploration and Sentiment Analiser")
+
+        st.text("Para este protótipo foi adicionado os dados de um app (Lojas Americanas) para teste.")
+
+        st.text("Existem duas páginas até o Momento: Home e Exploration")
 
         st.text("Home: Pagina Inicial")
         st.text("Exploration: Pagina com pequenas informações sobre os dados capturados")
-        st.text("Sentiment Analiser: Pagina para testar o classificador de analise de sentimentos")
+        #st.text("Sentiment Analiser: Pagina para testar o classificador de analise de sentimentos")
 
         st.text("Fique a Vontade para dar seu FeedBack")
 
@@ -133,23 +141,23 @@ def main():
             st.pyplot(fig)
 
         ## WordCloud
-        def get_word_clouds(df):
-            words = []
-            for i in df.content:
-                for p in i.lower().split():
-                    if p not in stopwords_list:
-                        words.append(p)
-            words = str(words)            
-            return words        
+        #def get_word_clouds(df):
+        #    words = []
+        #    for i in df.content:
+        #        for p in i.lower().split():
+        #            if p not in stopwords_list:
+        #                words.append(p)
+        #    words = str(words)            
+        #    return words        
 
-        st.header('Nuvem de palavras mais utilizadas')
-        word_cloud = WordCloud(width=1100, height=900, margin=0).generate(get_word_clouds(df_reduzido))
-        plt.figure(figsize=(20,11))
-        plt.imshow(word_cloud, interpolation='bilinear')
-        plt.axis('off')
-        plt.margins(x=0,y=0)
-        plt.show()
-        st.pyplot()
+        #st.header('Nuvem de palavras mais utilizadas')
+        #word_cloud = WordCloud(width=1100, height=900, margin=0).generate(get_word_clouds(df_reduzido))
+        #plt.figure(figsize=(20,11))
+        #plt.imshow(word_cloud, interpolation='bilinear')
+        #plt.axis('off')
+        #plt.margins(x=0,y=0)
+        #plt.show()
+        #st.pyplot()
 
         ## Tabelão 
         st.header('Tabelão - Filtre conforme necessidade')
