@@ -69,12 +69,12 @@ def main():
 
     if page == "Home":
 
-        st.header("Bem vindo ao Xrate App!")
+        st.header("Bem vindo ao Apps Web Scraper!")
         
         #image = Image.open('Data/XDATA.jpeg')
         #st.image(image, caption='XDATA - XP INC.', use_column_width=True)
 
-        st.text("O Xrate App veio para melhorar suas decisões baseadas em reviews da AppStore e do GooglePlay.")
+        st.text("O Apps Web Scraper veio para melhorar suas decisões baseadas em reviews da AppStore e do GooglePlay.")
 
         st.text("Para este protótipo foi adicionado os dados de um app (Lojas Americanas) para teste.")
 
