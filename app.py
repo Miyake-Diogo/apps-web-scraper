@@ -37,7 +37,23 @@ def main():
         apps_list = ['com.mercadolibre','com.alibaba.aliexpresshd', 'com.shopee.ph','com.contextlogic.wish']
         
         gpst = AppsWebScrapper('com.mercadolibre', 'br')
-        app_reviews_d2 = gpst.get_lot_of_app_reviews(list_of_apps)
+        app_reviews_d2 = gpst.get_lot_of_app_reviews(apps_list)
+        app_reviews_d2['at'] = pd.to_datetime(app_reviews_d2['at'], errors='coerce')
+        app_reviews_d2['year_month'] = app_reviews_d2['at'].dt.strftime('%Y-%m')
+        app_reviews_d2['day'] = app_reviews_d2['at'].dt.strftime('%d')
+        
+        @st.cache
+        def gplay_sentiment(df):
+            if df['score'] < 3:
+                return 'Negative'
+            elif df['score'] == 3:
+                return 'Neutral'
+            elif df['score'] > 3: 
+                return 'Positive'
+            else:
+                return 'Undefined'
+
+        app_reviews_d2['sentiment'] = app_reviews_d2.apply(gplay_sentiment, axis=1).reset_index(drop=True)
         apps_sentiment = app_reviews_d2.groupby(['appId']).agg({'sentiment': 'count'})#.reset_index(drop=True)
         st.text("Notas por app")
         st.bar_chart(apps_sentiment)
@@ -45,10 +61,15 @@ def main():
     if page == "Exploration":
         st.header("This is your data explorer.")
         st.set_option('deprecation.showPyplotGlobalUse', False)
-        app_name = st.text_input('Adicione o nome de um app: (ex.:com.mercadolibre)', type='com.mercadolibre')
-        gpst = AppsWebScrapper(app_name, 'br')
+        app_name = st.text_input('Adicione o nome de um app: (ex.:com.mercadolibre)', type="default")
+        if(app_name == None):
+            name = 'com.mercadolibre'
+            gpst = AppsWebScrapper(name, 'br')
+        else:
+            name = app_name
+            gpst = AppsWebScrapper(name, 'br')
+        
         app_reviews_df = gpst.get_gplay_data_as_dataframe()
-
         app_reviews_df['at'] = pd.to_datetime(app_reviews_df['at'], errors='coerce')
         app_reviews_df['year_month'] = app_reviews_df['at'].dt.strftime('%Y-%m')
         app_reviews_df['day'] = app_reviews_df['at'].dt.strftime('%d')

@@ -1,6 +1,7 @@
 ## Functions to plot some charts in app
 import matplotlib.pyplot as plt
 from PIL import Image
+import streamlit as st
 
 def plot_5_notes(dataframe):
     notas_5 = dataframe.query("score==5")["year_month"]
