@@ -58,7 +58,7 @@ def main():
         apps_list = ['com.mercadolibre','com.alibaba.aliexpresshd', 'com.shopee.ph','com.contextlogic.wish']
         
         gpst = AppsWebScrapper('com.mercadolibre', 'br')
-        app_reviews_d2 = gpst..get_lot_of_app_reviews(list_of_apps)
+        app_reviews_d2 = gpst.get_lot_of_app_reviews(list_of_apps)
         apps_sentiment = app_reviews_d2.groupby(['appId']).agg({'sentiment': 'count'})#.reset_index(drop=True)
         st.text("Notas por app")
         st.bar_chart(apps_sentiment)
