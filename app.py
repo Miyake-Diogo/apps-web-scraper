@@ -14,34 +14,13 @@ def main():
     st.title(':rocket: Apps Web Scraper - Seu app de exploração de comentários e feedbacks do Google Play e AppStore :rocket:')
     page = st.sidebar.selectbox("Choose a page", ["Home", "Compare","Exploration"])
     
-    app_name = st.text_input('Adicione o nome de um app: (ex.:com.mercadolibre)')
-    gpst = AppsWebScrapper(app_name, 'br')
-    app_reviews_df = gpst.get_gplay_data_as_dataframe()
-
-    app_reviews_df['at'] = pd.to_datetime(app_reviews_df['at'], errors='coerce')
-    app_reviews_df['year_month'] = app_reviews_df['at'].dt.strftime('%Y-%m')
-    app_reviews_df['day'] = app_reviews_df['at'].dt.strftime('%d')
-    
-    @st.cache
-    def gplay_sentiment(df):
-        if df['score'] < 3:
-            return 'Negative'
-        elif df['score'] == 3:
-            return 'Neutral'
-        elif df['score'] > 3: 
-            return 'Positive'
-        else:
-            return 'Undefined'
-
-    app_reviews_df['sentiment'] = app_reviews_df.apply(gplay_sentiment, axis=1).reset_index(drop=True)
-
     if page == "Home":
 
         st.header("Bem vindo ao Apps Web Scraper!")
 
         st.text("O Apps Web Scraper veio para melhorar suas decisões baseadas em reviews da AppStore e do GooglePlay.")
 
-        st.text("Para este protótipo foi adicionado os dados de um app (Lojas Americanas) para teste.")
+        st.text("Para este protótipo foi adicionado os dados de um app para teste.")
 
         st.text("Existem duas páginas até o Momento: Home e Exploration")
 
@@ -66,6 +45,26 @@ def main():
     if page == "Exploration":
         st.header("This is your data explorer.")
         st.set_option('deprecation.showPyplotGlobalUse', False)
+        app_name = st.text_input('Adicione o nome de um app: (ex.:com.mercadolibre)', type='com.mercadolibre')
+        gpst = AppsWebScrapper(app_name, 'br')
+        app_reviews_df = gpst.get_gplay_data_as_dataframe()
+
+        app_reviews_df['at'] = pd.to_datetime(app_reviews_df['at'], errors='coerce')
+        app_reviews_df['year_month'] = app_reviews_df['at'].dt.strftime('%Y-%m')
+        app_reviews_df['day'] = app_reviews_df['at'].dt.strftime('%d')
+        
+        @st.cache
+        def gplay_sentiment(df):
+            if df['score'] < 3:
+                return 'Negative'
+            elif df['score'] == 3:
+                return 'Neutral'
+            elif df['score'] > 3: 
+                return 'Positive'
+            else:
+                return 'Undefined'
+
+        app_reviews_df['sentiment'] = app_reviews_df.apply(gplay_sentiment, axis=1).reset_index(drop=True)
         col1, col2 = st.beta_columns(2)
         with col1:
             st.header('Quantidade de sentimentos positivos, negativos e neutros')
@@ -96,8 +95,6 @@ def main():
         else:
             coments = coments.sample(20)
             st.table(coments)
-
-        
 
         st.header('Quantidade de Notas do APP (de 1 a 5)')
         sentiment_chart = app_reviews_df.groupby(['score']).agg({'score': 'count'}).reset_index(drop=True)

@@ -1,4 +1,7 @@
 ## Functions to plot some charts in app
+import matplotlib.pyplot as plt
+from PIL import Image
+
 def plot_5_notes(dataframe):
     notas_5 = dataframe.query("score==5")["year_month"]
     fig, ax = plt.subplots()
