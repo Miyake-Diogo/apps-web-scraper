@@ -1,44 +1,28 @@
 import pandas as pd
-#import nltk
-#nltk.download('all')
 import streamlit as st
-from app_store_scraper import AppStore
 from google_play_scraper import Sort, reviews_all
-from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 from PIL import Image
+from helper_methods.apps_web_scraper import *
+from helper_plots import *
+
 
 def main():
     st.set_page_config(page_title="Apps Web Scraper", page_icon=":rocket:", layout="wide", initial_sidebar_state="expanded")
 
+    st.title(':rocket: Demo Mode - Dispoível para crawlear somente 200 comenários mais novos :rocket:')
     st.title(':rocket: Apps Web Scraper - Seu app de exploração de comentários e feedbacks do Google Play e AppStore :rocket:')
-    page = st.sidebar.selectbox("Choose a page", ["Home", "Exploration"])
+    page = st.sidebar.selectbox("Choose a page", ["Home", "Compare","Exploration"])
     
-    #user_app_input = st.text_input("Digite o endereço do app a buscar os comentários (Gplay)", 'com.facebook.katana')
+    app_name = st.text_input('Adicione o nome de um app: (ex.:com.mercadolibre)')
+    gpst = AppsWebScrapper(app_name, 'br')
+    app_reviews_df = gpst.get_gplay_data_as_dataframe()
 
-    #app_to_Review = AppStore(country="br", app_name="xp-investimentos")
-    #review_appstore = app_to_Review.review()
-    #appstore_reviews_df = pd.DataFrame(review_appstore)
-    
-    ## Google Play App Store
-    #user_app_input = 'com.amazon.avod.thirdpartyclient' 
-    #review_google_play = reviews_all(
-    #user_app_input,
-    #sleep_milliseconds=0, # defaults to 0
-    #lang='pt_BR', # defaults to 'en'
-    #country='br'#, # defaults to 'us'
-    #sort=Sort.NEWEST # defaults to Sort.MOST_RELEVANT
-    #)
-
-    #app_reviews_df = pd.DataFrame(review_google_play)
-    
-    app_reviews_df = pd.read_csv("Data/google_play_reviews.csv")
     app_reviews_df['at'] = pd.to_datetime(app_reviews_df['at'], errors='coerce')
     app_reviews_df['year_month'] = app_reviews_df['at'].dt.strftime('%Y-%m')
     app_reviews_df['day'] = app_reviews_df['at'].dt.strftime('%d')
-
-
     
+    @st.cache
     def gplay_sentiment(df):
         if df['score'] < 3:
             return 'Negative'
@@ -50,29 +34,10 @@ def main():
             return 'Undefined'
 
     app_reviews_df['sentiment'] = app_reviews_df.apply(gplay_sentiment, axis=1).reset_index(drop=True)
-    ## StopWords
-    #stopwords_list = nltk.corpus.stopwords.words('portuguese')
-    ## Reduced DataFrame
-    
-    #df_reduzido = app_reviews_df[['content','sentiment']]
-
-    #df_positive = df_reduzido[df_reduzido['sentiment']=='Positive']
-    #df_negative = df_reduzido[df_reduzido['sentiment']=='Negative']
-    #df_neutral = df_reduzido[df_reduzido['sentiment']=='Neutral']
-    #maj_class1 = resample(df_positive, replace=True, n_samples=1736, random_state=123) 
-    #maj_class2 = resample(df_negative, replace=True, n_samples=1736, random_state=123)
-
-    #df_final=pd.concat([df_neutral,maj_class1,maj_class2])
-
-    ## Deletando o que não for necessário
-    #del maj_class1, maj_class2, df_positive, df_neutral, df_negative
 
     if page == "Home":
 
         st.header("Bem vindo ao Apps Web Scraper!")
-        
-        #image = Image.open('Data/XDATA.jpeg')
-        #st.image(image, caption='XDATA - XP INC.', use_column_width=True)
 
         st.text("O Apps Web Scraper veio para melhorar suas decisões baseadas em reviews da AppStore e do GooglePlay.")
 
@@ -81,10 +46,22 @@ def main():
         st.text("Existem duas páginas até o Momento: Home e Exploration")
 
         st.text("Home: Pagina Inicial")
+        st.text("Compare: Pagina com comparações entre uma lista de apps")
         st.text("Exploration: Pagina com pequenas informações sobre os dados capturados")
         #st.text("Sentiment Analiser: Pagina para testar o classificador de analise de sentimentos")
 
         st.text("Fique a Vontade para dar seu FeedBack")
+
+    if page == "Compare":
+        st.header("This is your data Compare.")
+        st.text("For this Demo Mode only compare 4 these apps: 'com.mercadolibre','com.alibaba.aliexpresshd', 'com.shopee.ph','com.contextlogic.wish'")
+        apps_list = ['com.mercadolibre','com.alibaba.aliexpresshd', 'com.shopee.ph','com.contextlogic.wish']
+        
+        gpst = AppsWebScrapper('com.mercadolibre', 'br')
+        app_reviews_d2 = gpst..get_lot_of_app_reviews(list_of_apps)
+        apps_sentiment = app_reviews_d2.groupby(['appId']).agg({'sentiment': 'count'})#.reset_index(drop=True)
+        st.text("Notas por app")
+        st.bar_chart(apps_sentiment)
 
     if page == "Exploration":
         st.header("This is your data explorer.")
@@ -138,11 +115,12 @@ def main():
         with col4:
             ## Quantidade de notas 5
             st.header('Quantidade de notas 5')
-            notas_5 = app_reviews_df.query("score==5")["year_month"]
-            fig, ax = plt.subplots()
-            ax.hist(notas_5, bins=20, color='#33FFE9')
-            plt.xticks(rotation='vertical')
-            st.pyplot(fig)
+            plot_5_notes(app_reviews_df)
+            #notas_5 = app_reviews_df.query("score==5")["year_month"]
+            #fig, ax = plt.subplots()
+            #ax.hist(notas_5, bins=20, color='#33FFE9')
+            #plt.xticks(rotation='vertical')
+            #st.pyplot(fig)
 
         ## WordCloud
         #def get_word_clouds(df):
